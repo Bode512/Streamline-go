@@ -126,6 +126,12 @@ Abre una conexión Server-Sent Events (`text/event-stream`) para recibir cambios
 {"type":"history.updated","filename":"clip.mp4","deviceId":"phone-1","status":"ready"}
 ```
 
+### Código QR para compartir
+
+`GET /api/qr`
+
+Devuelve un PNG de 512x512 con la URL local de Streamline, usando la primera IP IPv4 de red disponible. El puerto puede sobrescribirse con `?port=8080`.
+
 ### Descargar un vídeo procesado
 
 `GET /download?file=<nombre>&deviceId=<id>`

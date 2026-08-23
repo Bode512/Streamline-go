@@ -21,6 +21,7 @@ import (
 
 	"Streamline/internal/config"
 	"Streamline/internal/storage"
+	"github.com/skip2/go-qrcode"
 )
 
 const (
@@ -473,6 +474,22 @@ func handleEvents(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func handleShareQR(w http.ResponseWriter, r *http.Request) {
+	port := r.URL.Query().Get("port")
+	if port == "" {
+		port = runtimeConfig.Port
+	}
+	shareURL := "http://" + obtenerIPLocal() + ":" + port + "/"
+	png, err := qrcode.Encode(shareURL, qrcode.Medium, 512)
+	if err != nil {
+		http.Error(w, "could not generate QR", http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Content-Type", "image/png")
+	w.Header().Set("Cache-Control", "no-store")
+	_, _ = w.Write(png)
+}
+
 func handleUploadOffset(w http.ResponseWriter, r *http.Request) {
 	filename := r.URL.Query().Get("file")
 	var offset uint64
@@ -646,6 +663,7 @@ func IniciarServidorMongoose(puerto string) error {
 	mux.HandleFunc("/upload", handleUpload)
 	mux.HandleFunc("/api/history", handleHistory)
 	mux.HandleFunc("/api/events", handleEvents)
+	mux.HandleFunc("/api/qr", handleShareQR)
 	mux.HandleFunc("/api/upload-offset", handleUploadOffset)
 	mux.HandleFunc("/api/jobs/cancel", handleCancelJob)
 	mux.HandleFunc("/api/jobs/retry", handleRetryJob)
