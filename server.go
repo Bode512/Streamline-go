@@ -464,6 +464,11 @@ func handleHistory(w http.ResponseWriter, r *http.Request) {
 	historyMu.Lock()
 	items := make([]HistoryItem, 0, len(history))
 	for _, it := range history {
+		if info, err := os.Stat(filepath.Join(runtimeConfig.OutputDir, it.Filename)); err == nil {
+			it.CurrentSize = info.Size()
+		} else if info, err := os.Stat(filepath.Join(runtimeConfig.InputDir, it.Filename)); err == nil {
+			it.CurrentSize = info.Size()
+		}
 		if deviceID == "" || it.DeviceID == deviceID {
 			items = append(items, it)
 		}

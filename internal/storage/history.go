@@ -17,6 +17,7 @@ type HistoryItem struct {
 	DeviceInfo   string `json:"deviceInfo"`
 	Filename     string `json:"filename"`
 	OriginalSize int64  `json:"originalSize"`
+	CurrentSize  int64  `json:"currentSize"`
 	Status       string `json:"status"`
 	UploadTime   int64  `json:"uploadTime"`
 }

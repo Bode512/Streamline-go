@@ -3,7 +3,7 @@
   import { QRDataURL, ServerURL } from '../wailsjs/go/main/App.js'
 
   type Stats = { videos: number; processing: number; ready: number; downloaded: number; bytes: number }
-  type Item = { filename: string; deviceId: string; deviceInfo: string; status: string; originalSize: number; uploadTime: number }
+  type Item = { filename: string; deviceId: string; deviceInfo: string; status: string; originalSize: number; currentSize: number; uploadTime: number }
 
   let server = 'http://127.0.0.1:8000'
   let connected = false
