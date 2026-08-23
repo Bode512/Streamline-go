@@ -37,4 +37,6 @@ wails build
 
 El ejecutable Windows se genera en `build/bin/desktop.exe`.
 
+La consola incluye importación local: selecciona vídeos desde el ordenador y pulsa **Convertir**. El archivo se envía al Core por bloques, se procesa con HandBrakeCLI y el original se mueve a la Papelera al finalizar correctamente.
+
 La interfaz consume `/api/stats`, `/api/history`, `/api/events`, `/api/qr`, `/api/jobs/cancel` y `/api/jobs/retry`.

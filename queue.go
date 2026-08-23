@@ -75,7 +75,6 @@ func (q *Cola) Dequeue() (Elemento, error) {
 	elem.Estado = PROCESANDO
 	q.elementos[0] = Elemento{}
 	q.elementos = q.elementos[1:]
-	delete(q.dedupe, elem.Ruta)
 	return elem, nil
 }
 
@@ -94,8 +93,14 @@ func (q *Cola) EsperarElemento() (Elemento, bool) {
 	elem.Estado = PROCESANDO
 	q.elementos[0] = Elemento{}
 	q.elementos = q.elementos[1:]
-	delete(q.dedupe, elem.Ruta)
 	return elem, true
+}
+
+// Completar libera la ruta para que pueda reintentarse o volver a detectarse.
+func (q *Cola) Completar(ruta string) {
+	q.mu.Lock()
+	delete(q.dedupe, ruta)
+	q.mu.Unlock()
 }
 
 // EsVacia informa si la cola no tiene elementos.

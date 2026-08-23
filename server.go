@@ -82,16 +82,30 @@ func nombreSeguro(name string) bool {
 // obtenerIPLocal devuelve la primera IPv4 no loopback.
 // Equivale a obtener_ip_local().
 func obtenerIPLocal() string {
+	if connection, err := net.Dial("udp4", "8.8.8.8:80"); err == nil {
+		defer connection.Close()
+		if address, ok := connection.LocalAddr().(*net.UDPAddr); ok && address.IP.To4() != nil {
+			return address.IP.To4().String()
+		}
+	}
 	addresses, err := net.InterfaceAddrs()
 	if err != nil {
 		return "127.0.0.1"
 	}
+	linkLocal := ""
 	for _, addr := range addresses {
 		if ipnet, ok := addr.(*net.IPNet); ok && !ipnet.IP.IsLoopback() {
 			if ip4 := ipnet.IP.To4(); ip4 != nil {
+				if ip4.IsLinkLocalUnicast() {
+					linkLocal = ip4.String()
+					continue
+				}
 				return ip4.String()
 			}
 		}
+	}
+	if linkLocal != "" {
+		return linkLocal
 	}
 	return "127.0.0.1"
 }
@@ -270,6 +284,20 @@ func writeErrorJSON(w http.ResponseWriter, status int, msg string, extra map[str
 		payload[k] = v
 	}
 	writeJSON(w, status, payload)
+}
+
+func corsMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Range")
+		w.Header().Set("Access-Control-Expose-Headers", "Content-Length, Content-Range, Accept-Ranges")
+		if r.Method == http.MethodOptions {
+			w.WriteHeader(http.StatusNoContent)
+			return
+		}
+		next.ServeHTTP(w, r)
+	})
 }
 
 func handleRoot(w http.ResponseWriter, r *http.Request) {
@@ -720,7 +748,7 @@ func IniciarServidorMongoose(puerto string) error {
 
 	srv := &http.Server{
 		Addr:              ":" + puerto,
-		Handler:           mux,
+		Handler:           corsMiddleware(mux),
 		ReadHeaderTimeout: 10 * time.Second,
 		ReadTimeout:       2 * time.Minute, // subidas por bloques de 4 MB
 		WriteTimeout:      2 * time.Minute,
@@ -767,19 +795,19 @@ const sHTML = `<!DOCTYPE html>
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Streamline — Video Server</title>
 <style>
-body{background:#000;color:#f5f5f7;font-family:system-ui,sans-serif;max-width:720px;margin:0 auto;padding:20px}
-.card{background:#111;border:1px solid #222;border-radius:16px;padding:24px;margin-bottom:16px}
-h1{font-size:20px;margin:0 0 8px}
-p{font-size:13px;color:#888}
-input[type=file]{margin:16px 0}
-button{background:#2997ff;color:#fff;border:none;padding:12px 18px;border-radius:999px;font-weight:600;cursor:pointer}
-button:disabled{opacity:.4;cursor:not-allowed}
-.file-row{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:10px;border:1px solid #222;border-radius:10px;margin-top:8px}
-.progress{height:4px;background:#222;border-radius:2px;margin-top:6px}
-.progress>div{height:100%;background:#2997ff;width:0;border-radius:2px}
-.tab{margin-right:8px;background:#222;color:#aaa}
-.tab.on{background:#2997ff;color:#fff}
-a{color:#2997ff;text-decoration:none}
+:root{font-family:Georgia,'Times New Roman',serif;color:#f4f1e8;background:#101313}
+*{box-sizing:border-box}
+body{background:radial-gradient(circle at 85% 5%,#244846 0,transparent 28%),#101313;max-width:760px;margin:0 auto;padding:20px;color:#f4f1e8}
+body:before{content:'STREAMLINE';display:block;color:#d6a85e;font:11px Arial,sans-serif;letter-spacing:.22em;border-bottom:1px solid #3b4c48;padding:0 0 18px;margin-bottom:26px}
+.card{background:#18201f;border:1px solid #3b4c48;padding:24px;margin-bottom:14px}
+h1{font-size:28px;font-weight:normal;margin:0 0 8px}p{font:14px Arial,sans-serif;color:#9bb1a7;line-height:1.5}
+input[type=file]{width:100%;margin:16px 0;padding:14px;border:1px dashed #53645f;color:#9bb1a7;background:#101313}
+button{background:#d6a85e;color:#101313;border:0;padding:12px 18px;font-weight:bold;cursor:pointer}button:disabled{opacity:.4;cursor:not-allowed}
+.file-row{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:13px;border:1px solid #3b4c48;background:#202d2a;margin-top:8px}.file-row a{color:#d6a85e;font:bold 12px Arial,sans-serif;text-decoration:none;white-space:nowrap}
+.progress{height:4px;background:#35433f;margin-top:8px}.progress>div{height:100%;background:#d6a85e;width:0}
+.tab{margin:0 6px 8px 0;background:#263632;color:#9bb1a7;padding:10px 12px}.tab.on{background:#d6a85e;color:#101313}
+.thumb{width:64px;height:42px;object-fit:cover;background:#2b4541}.file-row>div:first-child{flex:1;min-width:0}.file-row>div:first-child>div:first-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+a{color:#d6a85e}
 </style>
 </head>
 <body>
@@ -885,7 +913,7 @@ var html='';
 cur.forEach(function(it){
 var mb=(it.originalSize/1048576).toFixed(1);
 if(tab==='ready'){
-html+='<div class="file-row"><div><div>'+it.filename+'</div><div style="font-size:12px;color:#888">'+mb+' MB — Listo para descargar</div></div><a href="/download?file='+encodeURIComponent(it.filename)+'&deviceId='+did+'" download="'+it.filename+'">Descargar</a><button onclick="delEntry(\''+it.filename+'\',0)">Eliminar</button></div>';
+html+='<div class="file-row"><video class="thumb" src="/preview?file='+encodeURIComponent(it.filename)+'" preload="metadata" muted></video><div><div>'+it.filename+'</div><div style="font-size:12px;color:#9bb1a7">'+mb+' MB — Listo para descargar</div></div><a href="/download?file='+encodeURIComponent(it.filename)+'&deviceId='+did+'" download="'+it.filename+'">Descargar</a><button onclick="delEntry(\''+it.filename+'\',0)">Eliminar</button></div>';
 }else if(tab==='processing'){
 html+='<div class="file-row"><div><div>'+it.filename+'</div><div style="font-size:12px;color:#888">'+mb+' MB — Procesando...</div></div><button onclick="delEntry(\''+it.filename+'\',1)">Eliminar</button></div>';
 }else{

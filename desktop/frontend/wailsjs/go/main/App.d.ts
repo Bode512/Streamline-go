@@ -3,6 +3,8 @@
 
 export function Greet(arg1:string):Promise<string>;
 
+export function QRDataURL():Promise<string>;
+
 export function ServerURL():Promise<string>;
 
 export function StartCore():Promise<void>;

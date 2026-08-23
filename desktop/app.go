@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/base64"
 	"fmt"
 	"net"
 	"net/http"
@@ -9,6 +10,8 @@ import (
 	"os/exec"
 	"path/filepath"
 	"time"
+
+	"github.com/skip2/go-qrcode"
 )
 
 // App struct
@@ -43,7 +46,20 @@ func (a *App) ServerURL() string {
 	if port == "" {
 		port = "8000"
 	}
-	return "http://127.0.0.1:" + port
+	return "http://" + localIP() + ":" + port
+}
+
+// QRDataURL genera el QR dentro del proceso Desktop, sin descargarlo por HTTP.
+func (a *App) QRDataURL() string {
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8000"
+	}
+	png, err := qrcode.Encode("http://"+localIP()+":"+port+"/", qrcode.Medium, 512)
+	if err != nil {
+		return ""
+	}
+	return "data:image/png;base64," + base64.StdEncoding.EncodeToString(png)
 }
 
 func (a *App) StartCore() error {
@@ -106,10 +122,17 @@ func findCoreRoot() string {
 }
 
 func localIP() string {
+	if connection, err := net.Dial("udp4", "8.8.8.8:80"); err == nil {
+		defer connection.Close()
+		if address, ok := connection.LocalAddr().(*net.UDPAddr); ok && address.IP.To4() != nil {
+			return address.IP.To4().String()
+		}
+	}
 	interfaces, err := net.Interfaces()
 	if err != nil {
 		return "127.0.0.1"
 	}
+	linkLocal := ""
 	for _, network := range interfaces {
 		if network.Flags&net.FlagUp == 0 || network.Flags&net.FlagLoopback != 0 {
 			continue
@@ -121,9 +144,16 @@ func localIP() string {
 		for _, address := range addresses {
 			ip, _, err := net.ParseCIDR(address.String())
 			if err == nil && ip.To4() != nil {
+				if ip.IsLinkLocalUnicast() {
+					linkLocal = ip.String()
+					continue
+				}
 				return ip.String()
 			}
 		}
+	}
+	if linkLocal != "" {
+		return linkLocal
 	}
 	return "127.0.0.1"
 }

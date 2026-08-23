@@ -174,8 +174,8 @@ func compressVideo(ctx context.Context, input, output string) bool {
 	fmt.Printf("\n[WORKER] Compresión completada con HandBrakeCLI: %s\n", output)
 
 	// Eliminar el original de videos/.
-	if err := os.Remove(input); err == nil {
-		fmt.Printf("[WORKER] Archivo procesado y eliminado de videos/: %s\n", input)
+	if err := moveToTrash(input); err == nil {
+		fmt.Printf("[WORKER] Archivo procesado y movido a la Papelera: %s\n", input)
 	} else {
 		fmt.Printf("[WORKER] Error al eliminar el original de videos/: %v\n", err)
 	}

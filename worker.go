@@ -39,7 +39,6 @@ func ProcesarCola(ctx context.Context, rutaSalida string) {
 			// Cola liberada y vacía: fin del worker.
 			return
 		}
-
 		// Obtener el nombre base del archivo de entrada.
 		nombreArchivo := filepath.Base(elemento.Ruta)
 
@@ -69,5 +68,6 @@ func ProcesarCola(ctx context.Context, rutaSalida string) {
 			actualizarEstadoArchivo(nombreArchivo, "failed")
 			log.Printf("[JOB %s] failed: procesamiento invalido", nombreArchivo)
 		}
+		miCola.Completar(elemento.Ruta)
 	}
 }
