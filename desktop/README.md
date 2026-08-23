@@ -37,6 +37,8 @@ wails build
 
 El ejecutable Windows se genera en `build/bin/desktop.exe`.
 
+El release autocontenido incluye el Core Go y HandBrakeCLI dentro del ejecutable. Al abrir `desktop.exe` se extraen automáticamente a una carpeta temporal privada; no hace falta instalar Go, Node.js ni copiar `bin/HandBrakeCLI.exe`.
+
 La consola incluye importación local: selecciona vídeos desde el ordenador y pulsa **Convertir**. El archivo se envía al Core por bloques, se procesa con HandBrakeCLI y el original se mueve a la Papelera al finalizar correctamente.
 
 La interfaz consume `/api/stats`, `/api/history`, `/api/events`, `/api/qr`, `/api/jobs/cancel` y `/api/jobs/retry`.

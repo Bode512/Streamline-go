@@ -192,6 +192,8 @@ Pop-Location
 
 El resultado queda en `desktop/build/bin/desktop.exe`.
 
+También puedes regenerar el release autocontenido con `./release.ps1`. El script embebe el Core Go y `bin/HandBrakeCLI.exe` dentro de un único `desktop.exe`; el usuario final no necesita Go, Node.js ni archivos adicionales. El binario de HandBrakeCLI debe distribuirse respetando su licencia.
+
 El Desktop inicia automáticamente el Core Go. En desarrollo busca el `go.mod` del repositorio y ejecuta `go run .`; para una distribución autocontenida, configura `STREAMLINE_CORE_PATH` apuntando a un Core compilado junto al Desktop.
 
 Desde el Desktop puedes seleccionar vídeos del ordenador con **Convertir desde este ordenador**. Se suben por bloques al Core y siguen el mismo worker de HandBrakeCLI que las subidas móviles. Cuando la conversión termina correctamente, el original se mueve a la Papelera de Windows y el resultado queda en `convertidos/`.

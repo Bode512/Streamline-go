@@ -73,17 +73,20 @@ func (a *App) StartCore() error {
 		return nil
 	}
 
-	root := findCoreRoot()
 	var command *exec.Cmd
 	if configured := os.Getenv("STREAMLINE_CORE_PATH"); configured != "" {
 		command = exec.Command(configured)
-	} else if root != "" {
-		command = exec.Command("go", "run", ".")
-		command.Dir = root
 	} else {
-		return fmt.Errorf("no se encontró el Core; configura STREAMLINE_CORE_PATH")
+		corePath, err := extractEmbeddedCore()
+		if err != nil {
+			return err
+		}
+		command = exec.Command(corePath)
 	}
 	command.Env = append(os.Environ(), "PORT="+port)
+	if handBrakePath, err := extractEmbeddedHandBrake(); err == nil {
+		command.Env = append(command.Env, "HANDBRAKE_PATH="+handBrakePath)
+	}
 	command.Stdout = os.Stdout
 	command.Stderr = os.Stderr
 	if err := command.Start(); err != nil {
