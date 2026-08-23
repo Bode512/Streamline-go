@@ -132,6 +132,13 @@ Abre una conexión Server-Sent Events (`text/event-stream`) para recibir cambios
 
 Devuelve un PNG de 512x512 con la URL local de Streamline, usando la primera IP IPv4 de red disponible. El puerto puede sobrescribirse con `?port=8080`.
 
+### Red y configuración efectiva
+
+- `GET /api/network` devuelve las interfaces, sus IPs, el puerto activo y la URL para compartir.
+- `GET /api/config` devuelve las carpetas, el puerto y la ruta de SQLite en uso.
+
+Estos endpoints están pensados para que un cliente Desktop pueda mostrar el estado local sin replicar la lógica de detección de red.
+
 ### Descargar un vídeo procesado
 
 `GET /download?file=<nombre>&deviceId=<id>`

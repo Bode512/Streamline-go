@@ -490,6 +490,27 @@ func handleShareQR(w http.ResponseWriter, r *http.Request) {
 	_, _ = w.Write(png)
 }
 
+func handleNetwork(w http.ResponseWriter, r *http.Request) {
+	port := r.URL.Query().Get("port")
+	if port == "" {
+		port = runtimeConfig.Port
+	}
+	writeJSON(w, http.StatusOK, map[string]any{
+		"port":       port,
+		"shareURL":   "http://" + obtenerIPLocal() + ":" + port + "/",
+		"interfaces": localInterfaces(),
+	})
+}
+
+func handleConfig(w http.ResponseWriter, r *http.Request) {
+	writeJSON(w, http.StatusOK, map[string]string{
+		"port":         runtimeConfig.Port,
+		"inputDir":     runtimeConfig.InputDir,
+		"outputDir":    runtimeConfig.OutputDir,
+		"databasePath": runtimeConfig.DatabasePath,
+	})
+}
+
 func handleUploadOffset(w http.ResponseWriter, r *http.Request) {
 	filename := r.URL.Query().Get("file")
 	var offset uint64
@@ -648,6 +669,7 @@ func handleStats(w http.ResponseWriter, r *http.Request) {
 // IniciarServidorMongoose arranca el servidor HTTP.
 // Equivale a iniciar_servidor_mongoose().
 func IniciarServidorMongoose(puerto string) error {
+	runtimeConfig.Port = puerto
 	ip := obtenerIPLocal()
 
 	if err := crearDirectorio(runtimeConfig.InputDir); err != nil {
@@ -664,6 +686,8 @@ func IniciarServidorMongoose(puerto string) error {
 	mux.HandleFunc("/api/history", handleHistory)
 	mux.HandleFunc("/api/events", handleEvents)
 	mux.HandleFunc("/api/qr", handleShareQR)
+	mux.HandleFunc("/api/network", handleNetwork)
+	mux.HandleFunc("/api/config", handleConfig)
 	mux.HandleFunc("/api/upload-offset", handleUploadOffset)
 	mux.HandleFunc("/api/jobs/cancel", handleCancelJob)
 	mux.HandleFunc("/api/jobs/retry", handleRetryJob)
