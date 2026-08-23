@@ -26,7 +26,7 @@ Los formatos detectados son `.mp4`, `.mkv`, `.mov`, `.avi`, `.m4v` y `.webm`.
 Clona o descarga el proyecto y entra en su directorio:
 
 ```bash
-git clone <URL_DEL_REPOSITORIO>
+git clone https://github.com/Bode512/Streamline-go.git
 cd Streamline
 go mod download
 ```
