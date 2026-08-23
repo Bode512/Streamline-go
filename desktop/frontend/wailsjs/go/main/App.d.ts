@@ -4,3 +4,7 @@
 export function Greet(arg1:string):Promise<string>;
 
 export function ServerURL():Promise<string>;
+
+export function StartCore():Promise<void>;
+
+export function StopCore():Promise<void>;

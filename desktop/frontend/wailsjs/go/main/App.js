@@ -9,3 +9,11 @@ export function Greet(arg1) {
 export function ServerURL() {
   return window['go']['main']['App']['ServerURL']();
 }
+
+export function StartCore() {
+  return window['go']['main']['App']['StartCore']();
+}
+
+export function StopCore() {
+  return window['go']['main']['App']['StopCore']();
+}

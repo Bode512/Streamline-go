@@ -192,6 +192,8 @@ Pop-Location
 
 El resultado queda en `desktop/build/bin/desktop.exe`.
 
+El Desktop inicia automáticamente el Core Go. En desarrollo busca el `go.mod` del repositorio y ejecuta `go run .`; para una distribución autocontenida, configura `STREAMLINE_CORE_PATH` apuntando a un Core compilado junto al Desktop.
+
 Ejecuta las pruebas con:
 
 ```bash

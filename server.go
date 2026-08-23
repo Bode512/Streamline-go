@@ -511,6 +511,10 @@ func handleConfig(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+func handleHealth(w http.ResponseWriter, r *http.Request) {
+	writeJSON(w, http.StatusOK, map[string]string{"status": "ok"})
+}
+
 func handleUploadOffset(w http.ResponseWriter, r *http.Request) {
 	filename := r.URL.Query().Get("file")
 	var offset uint64
@@ -574,6 +578,21 @@ func handleDownload(w http.ResponseWriter, r *http.Request) {
 	}
 	log.Printf("[DOWNLOAD] %s -> %s", filename, deviceID)
 	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%q", filename))
+	http.ServeFile(w, r, path)
+}
+
+func handlePreview(w http.ResponseWriter, r *http.Request) {
+	filename := r.URL.Query().Get("file")
+	deviceID := r.URL.Query().Get("deviceId")
+	if !nombreSeguro(filename) || !historyStatus(filename, deviceID, statusReady) {
+		http.NotFound(w, r)
+		return
+	}
+	path := filepath.Join(runtimeConfig.OutputDir, filename)
+	if !existeFichero(path) {
+		http.NotFound(w, r)
+		return
+	}
 	http.ServeFile(w, r, path)
 }
 
@@ -688,10 +707,12 @@ func IniciarServidorMongoose(puerto string) error {
 	mux.HandleFunc("/api/qr", handleShareQR)
 	mux.HandleFunc("/api/network", handleNetwork)
 	mux.HandleFunc("/api/config", handleConfig)
+	mux.HandleFunc("/api/health", handleHealth)
 	mux.HandleFunc("/api/upload-offset", handleUploadOffset)
 	mux.HandleFunc("/api/jobs/cancel", handleCancelJob)
 	mux.HandleFunc("/api/jobs/retry", handleRetryJob)
 	mux.HandleFunc("/download", handleDownload)
+	mux.HandleFunc("/preview", handlePreview)
 	mux.HandleFunc("/api/cleanup", handleCleanup)
 	mux.HandleFunc("/api/devices", handleDevices)
 	mux.HandleFunc("/api/stats", handleStats)

@@ -23,6 +23,10 @@ go run .
 
 La aplicación usa `http://127.0.0.1:8000` por defecto. También puedes conectar una URL LAN desde el campo de servidor.
 
+Al iniciar la aplicación, Wails arranca automáticamente el Core Go y espera su health check. Al cerrar la ventana, también detiene el proceso del Core. Para usar un Core ya compilado, define `STREAMLINE_CORE_PATH` con la ruta del ejecutable.
+
+El panel muestra miniaturas de los vídeos listos, peso original, duración detectada por el reproductor, estado, historial, QR para móviles y actividad en tiempo real.
+
 ## Building
 
 Para construir el paquete distribuible:
