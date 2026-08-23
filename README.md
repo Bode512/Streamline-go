@@ -171,6 +171,27 @@ Los archivos temporales de subida usan el patrón `.upload_<nombre>.part`. Duran
 
 ## Desarrollo
 
+### Desktop Wails
+
+La aplicación Desktop está en [desktop](desktop). Necesita el Core ejecutándose en otra terminal:
+
+```powershell
+go run .
+Push-Location desktop
+wails dev
+Pop-Location
+```
+
+Para generar el ejecutable Windows:
+
+```powershell
+Push-Location desktop
+wails build
+Pop-Location
+```
+
+El resultado queda en `desktop/build/bin/desktop.exe`.
+
 Ejecuta las pruebas con:
 
 ```bash
