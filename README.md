@@ -132,6 +132,13 @@ Abre una conexión Server-Sent Events (`text/event-stream`) para recibir cambios
 
 Solo se sirven archivos cuyo estado sea `ready`.
 
+### Controlar trabajos
+
+- `POST /api/jobs/cancel?file=<nombre>` cancela un procesamiento activo.
+- `POST /api/jobs/retry?file=<nombre>` vuelve a encolar un vídeo disponible en la carpeta de entrada.
+
+Los fallos de HandBrakeCLI se reintentan automáticamente hasta tres veces. Los estados posibles incluyen `processing`, `ready`, `failed`, `canceled` y `downloaded`.
+
 ### Limpiar archivos
 
 `GET /api/cleanup?file=<nombre>&deviceId=<id>`

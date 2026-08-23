@@ -34,6 +34,7 @@ const (
 	statusReady      = "ready"
 	statusFailed     = "failed"
 	statusDownloaded = "downloaded"
+	statusCanceled   = "canceled"
 )
 
 // HistoryItem representa una entrada del historial.
@@ -484,6 +485,43 @@ func handleUploadOffset(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]any{"offset": offset})
 }
 
+func handleCancelJob(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+	filename := r.URL.Query().Get("file")
+	if !nombreSeguro(filename) {
+		writeErrorJSON(w, http.StatusBadRequest, "Invalid filename", nil)
+		return
+	}
+	if !jobs.cancelJob(filename) {
+		writeErrorJSON(w, http.StatusNotFound, "Job is not running", nil)
+		return
+	}
+	writeJSON(w, http.StatusAccepted, map[string]any{"status": statusCanceled, "file": filename})
+}
+
+func handleRetryJob(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+	filename := r.URL.Query().Get("file")
+	if !nombreSeguro(filename) {
+		writeErrorJSON(w, http.StatusBadRequest, "Invalid filename", nil)
+		return
+	}
+	path := filepath.Join(runtimeConfig.InputDir, filename)
+	if !existeFichero(path) {
+		writeErrorJSON(w, http.StatusNotFound, "Input file is unavailable", nil)
+		return
+	}
+	histUpsert("", "", filename, 0, statusProcessing)
+	enqueueFile(path)
+	writeJSON(w, http.StatusAccepted, map[string]any{"status": statusProcessing, "file": filename})
+}
+
 func handleDownload(w http.ResponseWriter, r *http.Request) {
 	filename := r.URL.Query().Get("file")
 	deviceID := r.URL.Query().Get("deviceId")
@@ -609,6 +647,8 @@ func IniciarServidorMongoose(puerto string) error {
 	mux.HandleFunc("/api/history", handleHistory)
 	mux.HandleFunc("/api/events", handleEvents)
 	mux.HandleFunc("/api/upload-offset", handleUploadOffset)
+	mux.HandleFunc("/api/jobs/cancel", handleCancelJob)
+	mux.HandleFunc("/api/jobs/retry", handleRetryJob)
 	mux.HandleFunc("/download", handleDownload)
 	mux.HandleFunc("/api/cleanup", handleCleanup)
 	mux.HandleFunc("/api/devices", handleDevices)

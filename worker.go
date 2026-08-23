@@ -4,6 +4,7 @@ import (
 	"context"
 	"log"
 	"path/filepath"
+	"time"
 )
 
 // actualizarEstadoArchivo actualiza el estado de un archivo en el historial.
@@ -47,11 +48,23 @@ func ProcesarCola(ctx context.Context, rutaSalida string) {
 
 		log.Printf("[WORKER] Procesando: %s -> %s", elemento.Ruta, rutaFinal)
 
-		ok = compressVideo(elemento.Ruta, rutaFinal)
+		jobCtx := jobs.start(ctx, nombreArchivo)
+		for attempt := 1; attempt <= 3; attempt++ {
+			ok = compressVideo(jobCtx, elemento.Ruta, rutaFinal)
+			if ok || jobCtx.Err() != nil {
+				break
+			}
+			events.publish(StreamEvent{Type: "job.retry", Filename: nombreArchivo, Payload: map[string]int{"attempt": attempt}})
+			time.Sleep(time.Duration(attempt) * time.Second)
+		}
+		jobs.finish(nombreArchivo)
 
 		if ok {
 			actualizarEstadoArchivo(nombreArchivo, "ready")
 			log.Printf("[JOB %s] completed: resultado publicado", nombreArchivo)
+		} else if jobCtx.Err() != nil {
+			actualizarEstadoArchivo(nombreArchivo, "canceled")
+			events.publish(StreamEvent{Type: "job.canceled", Filename: nombreArchivo, Status: "canceled"})
 		} else {
 			actualizarEstadoArchivo(nombreArchivo, "failed")
 			log.Printf("[JOB %s] failed: procesamiento invalido", nombreArchivo)

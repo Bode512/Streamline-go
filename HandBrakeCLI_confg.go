@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"os/exec"
@@ -104,7 +105,7 @@ func (w *lineFilterWriter) Write(p []byte) (int, error) {
 //
 // Devuelve true si la compresión se completó correctamente,
 // false en caso contrario. Equivale a compress_video() del C.
-func compressVideo(input, output string) bool {
+func compressVideo(ctx context.Context, input, output string) bool {
 	if !archivoExiste(input) {
 		fmt.Printf("[WORKER] Archivo ya no se encuentra en videos/ (omitiendo): %s\n", input)
 		return false
@@ -132,7 +133,7 @@ func compressVideo(input, output string) bool {
 	// Construir el comando sin shell.
 	// El C usaba: "HandBrakeCLI" -i "input" -o "temp" -e x265 -q 26
 	// --encoder-preset fast --vfr -B 96 -E av_aac 2>&1
-	cmd := exec.Command(
+	cmd := exec.CommandContext(ctx,
 		handbrakePath,
 		"-i", input,
 		"-o", tempOutput,
